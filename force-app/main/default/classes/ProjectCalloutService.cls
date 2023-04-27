@@ -12,8 +12,8 @@ public class ProjectCalloutService {
                                                 FROM ServiceTokens__c
                                                 WHERE Name = 'ProjectServiceToken'];
 
-        String tok = projectServiceToken.Id;
-        //ServiceTokens__c.getInstance('ProjectServiceToken').Token__c;
+        String tok = projectServiceToken.Token__c;
+        //String tok2 = ServiceTokens__c.getInstance('ProjectServiceToken').Token__c;
 
        List<Opportunity> opps = [SELECT Id, Name, Account.Name, CloseDate, Amount 
                                   FROM Opportunity
@@ -36,7 +36,7 @@ public class ProjectCalloutService {
         request.setEndpoint('callout:ProjectService');
         request.setMethod('POST');
         request.setHeader('Content-Type', 'application/json');
-        request.setHeader('token', '6bb3429e-9321-46cd-8ecc-815d2c915c6b');
+        request.setHeader('token', tok);
         request.setBody(jsonBody);
         HttpResponse response = http.send(request);
 
@@ -47,6 +47,8 @@ public class ProjectCalloutService {
             System.debug(response.getStatusCode());
             System.debug(response.getBody());
             System.debug('Algo fallo');
+            System.debug(tok);
+            System.debug(jsonBody);
         }
         System.debug(response.getBody());
     }
