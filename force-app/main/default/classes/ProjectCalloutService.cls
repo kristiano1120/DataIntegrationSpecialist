@@ -11,7 +11,7 @@ public class ProjectCalloutService {
         ServiceTokens__c projectServiceToken = [SELECT Id, Name, Token__c 
                                                 FROM ServiceTokens__c
                                                 WHERE Name = 'ProjectServiceToken'];
-
+ 
         String tok = projectServiceToken.Token__c;
         //String tok2 = ServiceTokens__c.getInstance('ProjectServiceToken').Token__c;
 
