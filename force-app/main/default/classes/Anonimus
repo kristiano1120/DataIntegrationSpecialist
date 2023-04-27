@@ -1,0 +1,16 @@
+List<Opportunity> opps = [SELECT Id, Name, Account.Name, CloseDate, Amount 
+                                  FROM Opportunity
+                                  ];
+List<Id> ids = new List<Id>();
+for (Opportunity op : opps) {
+    ids.add(op.Id);
+}                                  
+
+/*Opportunity opp = new Opportunity();
+opp.Id = '00641000004EKmFAAW';
+opp.Name = 'Super-Duper Big Deal';
+opp.Account.Name = 'SACME Corp, Inc.';
+opp.CloseDate = Date.today();
+opp.Amount = 150000;*/
+
+ProjectCalloutService.sendRequest(ids);
