@@ -1,5 +1,6 @@
 public class ProjectCalloutService {
-    //Complete the implementation for business and callout logic
+    public static final String PROJECT_SERVICE_TOKEN_NAME = 'ProjectServiceToken';
+
     @InvocableMethod
     public static void PostOpportunityToPMS(List<Id> oppIds){
         if(oppIds.size() > 0){
@@ -7,65 +8,54 @@ public class ProjectCalloutService {
         }
     }
 
-    public static void sendRequest(List<Id> oppIds){
-        ServiceTokens__c projectServiceToken = [SELECT Id, Name, Token__c 
-                                                FROM ServiceTokens__c
-                                                WHERE Name = 'ProjectServiceToken'];
- 
-        String tok = projectServiceToken.Token__c;
-        //String tok2 = ServiceTokens__c.getInstance('ProjectServiceToken').Token__c;
-
-       List<Opportunity> opps = [SELECT Id, Name, Account.Name, CloseDate, Amount 
-                                  FROM Opportunity
-                                  WHERE Id in :oppIds];
-        
-        Map<String, Object> opportunity = new Map<String, Object>();
-        if (opps.size() > 0) {
-            opportunity.put('opportunityId', opps[0].Id);
-            opportunity.put('opportunityName', opps[0].Name);
-            opportunity.put('accountName', opps[0].Account.Name);
-            opportunity.put('closeDate', opps[0].CloseDate);
-            opportunity.put('amount', opps[0].Amount);
-        }        
-        
-        // Construir el paquete JSON        
-        String jsonBody = JSON.serialize(opportunity);
-        
-        Http http = new Http();
-        HttpRequest request = new HttpRequest();
-        request.setEndpoint('callout:ProjectService');
-        request.setMethod('POST');
-        request.setHeader('Content-Type', 'application/json');
-        request.setHeader('token', tok);
-        request.setBody(jsonBody);
-        HttpResponse response = http.send(request);
-
-        if (response.getStatusCode() == 200) {
-            System.debug(response);
-            System.debug('Todo ok');
-        } else {
-            System.debug(response.getStatusCode());
-            System.debug(response.getBody());
-            System.debug('Algo fallo');
-            System.debug(tok);
-            System.debug(jsonBody);
-        }
-        System.debug(response.getBody());
-    }
-
-    
-
     public class QueueablePMSCall implements System.Queueable, Database.AllowsCallouts{
-        List<Id> oportunidadesParaProcesar;
+        List<Id> oppsToProccess;
 
         public QueueablePMSCall(List<Id> oppIds){
-            this.oportunidadesParaProcesar = oppIds;
+            this.oppsToProccess = oppIds;
         }
 
         public void execute(System.QueueableContext context){
-            sendRequest(oportunidadesParaProcesar);
+            collectDataForCallOut(oppsToProccess);
         }
     }
+
+    static void collectDataForCallOut(List<Id> oppIds){
+        List<Opportunity> oppsToProcess = [SELECT ID, Name, Account.Name, CloseDate, Amount
+                                                    FROM Opportunity
+                                                    WHERE Id In :oppIds];
+        if(oppsToProcess.size() > 0){           
+            makeCallout(oppsToProcess[0], ServiceTokens__c.getInstance(PROJECT_SERVICE_TOKEN_NAME).Token__c);
+        }
+    }
+
+    static void makeCallout(Opportunity opp, String projectServiceToken){
+        Http http = new Http();
+        HttpRequest request = new HttpRequest();
+
+        request.setMethod('POST');
+        request.setEndpoint('callout:ProjectService');
+        request.setHeader('Content-Type', 'application/json');
+        request.setHeader('token', projectServiceToken);
+        request.setBody(JSON.serialize(new JsonWrapper(opp)));
+        
+        HttpResponse response = http.send(request);
+
+
+        if (response.getStatusCode() == 201 && response.getStatus() == 'OK') {
+            System.debug(response);
+            System.debug('Todo ok');
+            opp.StageName = 'Submitted Project';
+        } else {
+            System.debug(response.getStatusCode());
+            System.debug(response.getBody());
+            System.debug(response.getStatus());
+            System.debug('Algo fallo');
+            
+            opp.StageName = 'Resubmit Project';
+        }
+        update opp;
+    }      
     
     public class JsonWrapper{
         String opportunityId;
