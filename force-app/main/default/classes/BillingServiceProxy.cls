@@ -41,16 +41,16 @@ public class BillingServiceProxy {
             Map<String, BillingServiceProxy.billProjectResponse_element> response_map_x = new Map<String, BillingServiceProxy.billProjectResponse_element>();
             response_map_x.put('response_x', response_x);
             WebServiceCallout.invoke(
-              this,
-              request_x,
-              response_map_x,
-              new String[]{endpoint_x,
-              '',
-              'http://salesforce.com/th/invoice-web-service',
-              'billProjectRequest',
-              'http://salesforce.com/th/invoice-web-service',
-              'billProjectResponse',
-              'BillingServiceProxy.billProjectResponse_element'}
+                this,
+                request_x,
+                response_map_x,
+                new String[]{endpoint_x,
+                '',
+                'http://salesforce.com/th/invoice-web-service',
+                'billProjectRequest',
+                'http://salesforce.com/th/invoice-web-service',
+                'billProjectResponse',
+                'BillingServiceProxy.billProjectResponse_element'}
             );
             response_x = response_map_x.get('response_x');
             return response_x.status;
